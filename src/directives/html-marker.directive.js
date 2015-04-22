@@ -1,7 +1,7 @@
 (function() {
     'use strict';
 
-    angular.module('angular-mapbox').directive('htmlMarker', function($compile, $timeout, mapboxService) {
+    angular.module('angular-mapbox').directive('htmlMarker', function($compile, $timeout, $parse, mapboxService) {
         var _colors = {
             navy: '#001f3f',
             blue: '#0074d9',
@@ -44,7 +44,7 @@
             controller.getMap().then(function(map) {
                 transclude(scope, function(transcludedContent) {
                     var popupContentElement;
-                    if(transcludedContent) {
+                    if(transcludedContent != null && transcludedContent.length > 0) {
                         popupContentElement = document.createElement('span');
                         for(var i = 0; i < transcludedContent.length; i++) {
                             popupContentElement.appendChild(transcludedContent[i]);
@@ -62,6 +62,15 @@
                         map.locate();
                     } else {
                         _marker = addMarker(scope, map, [attrs.lat, attrs.lng], popupContentElement, _opts, _style);
+
+                        if(attrs.onClick) {
+                          var clickFn = $parse(attrs.onClick, null, true);
+                          _marker.on('click', function() {
+                            scope.$apply(function() {
+                              clickFn(scope, {$event:event});
+                            });
+                          });
+                        }
                     }
                 });
 

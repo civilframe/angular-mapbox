@@ -144,7 +144,7 @@
 (function() {
     'use strict';
 
-    angular.module('angular-mapbox').directive('htmlMarker', function($compile, $timeout, mapboxService) {
+    angular.module('angular-mapbox').directive('htmlMarker', function($compile, $timeout, $parse, mapboxService) {
         var _colors = {
             navy: '#001f3f',
             blue: '#0074d9',
@@ -187,7 +187,7 @@
             controller.getMap().then(function(map) {
                 transclude(scope, function(transcludedContent) {
                     var popupContentElement;
-                    if(transcludedContent) {
+                    if(transcludedContent != null && transcludedContent.length > 0) {
                         popupContentElement = document.createElement('span');
                         for(var i = 0; i < transcludedContent.length; i++) {
                             popupContentElement.appendChild(transcludedContent[i]);
@@ -205,6 +205,15 @@
                         map.locate();
                     } else {
                         _marker = addMarker(scope, map, [attrs.lat, attrs.lng], popupContentElement, _opts, _style);
+
+                        if(attrs.onClick) {
+                          var clickFn = $parse(attrs.onClick, null, true);
+                          _marker.on('click', function() {
+                            scope.$apply(function() {
+                              clickFn(scope, {$event:event});
+                            });
+                          });
+                        }
                     }
                 });
 
@@ -277,7 +286,7 @@
 (function() {
   'use strict';
 
-  angular.module('angular-mapbox').directive('mapbox', function($compile, $q, mapboxService) {
+  angular.module('angular-mapbox').directive('mapbox', function($compile, $q, $parse, mapboxService) {
     var _mapboxMap;
 
     return {
@@ -306,14 +315,29 @@
         }
 
         if(attrs.onReposition) {
-          scope.map.on('dragend', function() {
-            scope[attrs.onReposition](scope.map.getBounds());
+          var repositionFn = $parse(attrs.onReposition, null, true);
+          scope.map.on('dragend', function(event) {
+            scope.$apply(function() {
+              repositionFn(scope, {$event:event});
+            });
           });
         }
 
         if(attrs.onZoom) {
-          scope.map.on('zoomend', function() {
-            scope[attrs.onZoom](scope.map.getBounds());
+          var zoomFn = $parse(attrs.onZoom, null, true);
+          scope.map.on('zoomend', function(event) {
+            scope.$apply(function() {
+              zoomFn(scope, {$event:event});
+            });
+          });
+        }
+
+        if(attrs.onClick) {
+          var clickFn = $parse(attrs.onClick, null, true);
+          scope.map.on('click', function(event) {
+            scope.$apply(function() {
+              clickFn(scope, {$event:event});
+            });
           });
         }
 
@@ -354,7 +378,7 @@
 (function() {
   'use strict';
 
-  angular.module('angular-mapbox').directive('marker', function($compile, $timeout, mapboxService) {
+  angular.module('angular-mapbox').directive('marker', function($compile, $timeout, $parse, mapboxService) {
     var _colors = {
       navy: '#001f3f',
       blue: '#0074d9',
@@ -392,7 +416,7 @@
       controller.getMap().then(function(map) {
         transclude(scope, function(transcludedContent) {
           var popupContentElement;
-          if(transcludedContent) {
+          if(transcludedContent != null && transcludedContent.length > 0) {
             popupContentElement = document.createElement('span');
             for(var i = 0; i < transcludedContent.length; i++) {
               popupContentElement.appendChild(transcludedContent[i]);
@@ -410,6 +434,15 @@
             map.locate();
           } else {
             _marker = addMarker(scope, map, [attrs.lat, attrs.lng], popupContentElement, _opts, _style);
+
+            if(attrs.onClick) {
+              var clickFn = $parse(attrs.onClick, null, true);
+              _marker.on('click', function() {
+                scope.$apply(function() {
+                  clickFn(scope, {$event:event});
+                });
+              });
+            }
           }
         });
 
